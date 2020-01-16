@@ -67,6 +67,8 @@ void networkData(char *data, int datalen){
        (data[0 + 1] == 'M')  &&
        (data[0 + 2] == 'X')  &&
        ((data[0 + 3] == 'C') || 
+      (data[0 + 3] == 'Z') || 
+      (data[0 + 3] == 'Y') || 
       (data[0 + 3] == 'R') || 
       (data[0 + 3] == 'P') || 
       (data[0 + 3] == 'V') || 
@@ -132,8 +134,26 @@ void networkData(char *data, int datalen){
      } else if  (data[0 + 3] == 'V') {
        d1 = queue.add(startChannel, updSp, decreaseValue(newValue), gamma /*or gamma - 1*/, true);                 /*WW*/
        d2 = queue.add(startChannel + 1, updSp, increaseValue(newValue), gamma, true);                              /*CW*/
-       d1 = queue.add(startChannel, updSp, minus10(newValue), gamma /*or gamma - 1*/, true);
-       d2 = queue.add(startChannel + 1, updSp, plus10(newValue), gamma, true);       
+       isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
+       queue.update(startChannel, onoffSpeed, isOnOff);
+       queue.update(startChannel + 1, onoffSpeed, isOnOff);
+     } else if  (data[0 + 3] == 'Z') {
+       // this mode enabels direct mode for tunable white stripes. like the rgb mode just with 2 channels
+       d1 = queue.add(startChannel, updSp, newValue % 1000, gamma, true); //WW
+       newValue = newValue / 1000;
+       d2 = queue.add(startChannel + 1, updSp, newValue % 1000, gamma, true); //CW
+       isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
+       queue.update(startChannel, onoffSpeed, isOnOff);
+       queue.update(startChannel + 1, onoffSpeed, isOnOff);
+
+     } else if  (data[0 + 3] == 'Y') {
+       // this mode enabels direct mode for tunable white stripes. like the rgb mode just with 2 channels. (eg. 30060 for 30% / 60% for WW / CW)
+       d1 = queue.add(startChannel + 1, updSp, newValue % 1000, gamma, true); //WW
+       newValue = newValue / 1000;
+       d2 = queue.add(startChannel, updSp, newValue % 1000, gamma, true); //CW
+       isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
+       queue.update(startChannel, onoffSpeed, isOnOff);
+       queue.update(startChannel + 1, onoffSpeed, isOnOff);
        isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
        queue.update(startChannel, onoffSpeed, isOnOff);
        queue.update(startChannel + 1, onoffSpeed, isOnOff);       
