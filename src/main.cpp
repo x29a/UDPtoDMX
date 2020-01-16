@@ -21,18 +21,18 @@ uint32_t extractNumber(const char *data, int *start, bool *eof) {
   return result;
 }
 
-#define proz10 20
+#define tunableWhiteAdjustment 20
 
-uint8_t plus10(uint16_t value) {
-  if (value >= proz10) {
-    return (value - proz10) * 100 / (100 - proz10);
+uint8_t increaseValue(uint16_t value, uint16_t adjustment = tunableWhiteAdjustment) {
+  if (value >= adjustment) {
+    return (value - adjustment) * 100 / (100 - adjustment);
   } else {
     return 0;
   }
 }
 
-uint8_t minus10(uint16_t value) {
-  return min(100, value * 100 / (100 - proz10));
+uint8_t decreaseValue(uint16_t value, uint16_t adjustment = tunableWhiteAdjustment) {
+  return min(100, value * 100 / (100 - adjustment));
 }
 
 #define onOffthreshold 10
@@ -124,17 +124,19 @@ void networkData(char *data, int datalen){
        isOnOff = queue.add(startChannel, updSp, newValue, gamma, true) > onOffthreshold;
        queue.update(startChannel, onoffSpeed, isOnOff);
      } else if  (data[0 + 3] == 'W') {
-       d1 = queue.add(startChannel, updSp, plus10(newValue), gamma, true);                                  /*CW*/
-       d2 = queue.add(startChannel + 1, updSp, minus10(newValue), gamma /*or gamma - 1*/, true);            /*WW*/
+       d1 = queue.add(startChannel, updSp, increaseValue(newValue), gamma, true);                                  /*CW*/
+       d2 = queue.add(startChannel + 1, updSp, decreaseValue(newValue), gamma /*or gamma - 1*/, true);             /*WW*/
        isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
        queue.update(startChannel, onoffSpeed, isOnOff);
        queue.update(startChannel + 1, onoffSpeed, isOnOff);
      } else if  (data[0 + 3] == 'V') {
+       d1 = queue.add(startChannel, updSp, decreaseValue(newValue), gamma /*or gamma - 1*/, true);                 /*WW*/
+       d2 = queue.add(startChannel + 1, updSp, increaseValue(newValue), gamma, true);                              /*CW*/
        d1 = queue.add(startChannel, updSp, minus10(newValue), gamma /*or gamma - 1*/, true);
        d2 = queue.add(startChannel + 1, updSp, plus10(newValue), gamma, true);       
        isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
        queue.update(startChannel, onoffSpeed, isOnOff);
-       queue.update(startChannel + 1, onoffSpeed, isOnOff);
+       queue.update(startChannel + 1, onoffSpeed, isOnOff);       
      } else if  (data[0 + 3] == 'S') {
        for (int ch = 0; ch < QUEUESIZE; ch++) {
          queue.add(startChannel + ch, updSp, newValue, gamma, true); 
