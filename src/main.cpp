@@ -67,6 +67,7 @@ void networkData(char *data, int datalen){
        (data[0 + 1] == 'M')  &&
        (data[0 + 2] == 'X')  &&
        ((data[0 + 3] == 'C') || 
+      (data[0 + 3] == 'K') || 
       (data[0 + 3] == 'Z') || 
       (data[0 + 3] == 'Y') || 
       (data[0 + 3] == 'R') || 
@@ -154,6 +155,23 @@ void networkData(char *data, int datalen){
        isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
        queue.update(startChannel, onoffSpeed, isOnOff);
        queue.update(startChannel + 1, onoffSpeed, isOnOff);
+     
+     } else if  (data[0 + 3] == 'K') {
+       // this mode uses tunable white information and takes a percentage and a Kelvin value (eg. 302700 => 30% at 2700K)
+       // this mode brings the best results for a specfic temperature over all dim levels. works best with H801s high dim resolution of 12bit
+       uint16_t colorTemp = newValue % 10000;
+       uint16_t percent = newValue / 10000;
+
+       // consider gamma value in percentage to make sure the temperature is the same at each dim level and according to gamma
+       percent = _prozToDim(percent, gamma);
+
+       // calculate percentage for each channel
+       uint16_t percentWW = (percent*(6500 - colorTemp))/3800;
+       uint16_t percentCW = (percent*(colorTemp - 2700))/3800;
+
+       d1 = queue.add(startChannel, updSp, percentWW, 0, false); //WW
+       d2 = queue.add(startChannel + 1, updSp, percentCW, 0, false); //CW
+
        isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
        queue.update(startChannel, onoffSpeed, isOnOff);
        queue.update(startChannel + 1, onoffSpeed, isOnOff);       
