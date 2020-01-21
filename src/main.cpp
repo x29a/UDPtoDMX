@@ -37,18 +37,18 @@ uint8_t decreaseValue(uint16_t value, uint16_t adjustment = tunableWhiteAdjustme
 
 #define onOffthreshold 10
 
-uint8_t scaleSpeed(uint8_t sp, uint8_t dx, uint8_t dmax) {
-  if ((dx == 0) || (sp == 255)) {
-    return sp;
+uint8_t scaleSpeed(uint8_t speed, uint8_t dimDelta, uint8_t maxDimDelta) {
+  if ((dimDelta == 0) || (speed == 255)) {
+    return speed; // already at max speed or no delta at all?
   } else {    
-    uint16_t ret = sp % 100;
-    ret = ret * dmax / dx;
-    if (sp < 200) { 
+    uint16_t ret = speed % 100; // remove speed multipier, ret should be between 1 and 99 from here on
+    ret = ret * maxDimDelta / dimDelta;
+    if (speed < 200) { 
       ret = min(ret, (uint16_t) 99);
     } else {
       ret = min(ret, (uint16_t) 54);
     }
-    return ret + (sp - (sp % 100));
+    return ret + (speed - (speed % 100));
   } 
 }
 
@@ -171,10 +171,11 @@ void networkData(char *data, int datalen){
 
        d1 = queue.add(startChannel, updSp, percentWW, 0, false); //WW
        d2 = queue.add(startChannel + 1, updSp, percentCW, 0, false); //CW
+       dmax = max(d1, d2);
 
        isOnOff = (d1 > onOffthreshold) || (d2 > onOffthreshold);
-       queue.update(startChannel, onoffSpeed, isOnOff);
-       queue.update(startChannel + 1, onoffSpeed, isOnOff);       
+       queue.update(startChannel, scaleSpeed(onoffSpeed, d1, dmax), isOnOff);
+       queue.update(startChannel + 1, scaleSpeed(onoffSpeed, d1, dmax), isOnOff);       
      } else if  (data[0 + 3] == 'S') {
        for (int ch = 0; ch < QUEUESIZE; ch++) {
          queue.add(startChannel + ch, updSp, newValue, gamma, true); 
