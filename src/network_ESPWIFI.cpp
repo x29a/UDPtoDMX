@@ -3,7 +3,7 @@
 #include "log.h"
 #include "network.h"
 #include <ESP8266WiFi.h>
-#include <WiFiUDP.h>
+#include <WiFiUdp.h>
 #ifdef USE_WIFIMANAER
 #include <DNSServer.h>
 #include <WiFiManager.h>
